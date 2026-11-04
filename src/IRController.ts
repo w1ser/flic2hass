@@ -48,7 +48,7 @@ export const makeIRController = (
     const availability = [
         {
             "payload_available": "ON",
-            "payload_not_available": "unavailable",
+            "payload_not_available": "OFF",
             "topic": LIFELINE_SGINAL,
         }
     ]
