@@ -129,14 +129,6 @@ var ENTITIES = {
             name: "User Active Disconnect"
         }
     ],
-    passive: [
-        "binary_sensor",
-        {
-            entity_category: "config",
-            expire_after: 5,
-            name: "Passive Mode"
-        }
-    ],
     button_short_press: [
         "device_automation",
         {
@@ -187,6 +179,14 @@ function makeButtonController(ha, buttonModule) {
     var genButtonUniqueId = function(bdaddr) {
         return bdaddr.replace(/:/g, "_");
     };
+    // Entities published by earlier versions that no longer exist. Their retained
+    // discovery configs are cleared on registration so they leave Home Assistant.
+    var RETIRED_ENTITIES = [
+        [
+            "binary_sensor",
+            "passive"
+        ]
+    ];
     var registerButton = function(button) {
         logger.info("Registering", JSON.stringify(button, null, 4));
         var haDevice = getDeviceFromButton(button);
@@ -219,6 +219,9 @@ function makeButtonController(ha, buttonModule) {
             }
             ha.registerEntity("Button ".concat(objectId), ENTITIES[objectId][0], genButtonUniqueId(button.bdaddr), objectId, haDevice, _object_spread$3({}, ENTITIES[objectId][1], avl));
         });
+        RETIRED_ENTITIES.forEach(function(retired) {
+            return ha.deregisterEntity(retired[0], genButtonUniqueId(button.bdaddr), retired[1]);
+        });
     };
     var deregisterButton = function(button) {
         logger.info("Deregistering", JSON.stringify(button, null, 4));
@@ -245,7 +248,6 @@ function makeButtonController(ha, buttonModule) {
         ha.publishState(genButtonUniqueId(button.bdaddr), "connected", button.connected ? "ON" : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), "ready", button.ready ? "ON" : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), "activeDisconnect", button.activeDisconnect ? "ON" : "OFF");
-        ha.publishState(genButtonUniqueId(button.bdaddr), "passive", button.activeDisconnect ? "ON" : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), "lifeline", "ON");
     };
     var addBtn = function(eventName) {

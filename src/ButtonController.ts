@@ -21,7 +21,6 @@ const ENTITIES: Record<string, [HAComponent, Record<string, any>]> = {
     "connected": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, device_class: 'connectivity', name: "Connection Established", payload_not_available: "OFF" }],
     "ready": ['binary_sensor', { entity_category: "config", expire_after: 5, device_class: 'connectivity', name: "Connection Verified" }],
     "activeDisconnect": ['binary_sensor', { entity_category: "config", expire_after: 5, name: "User Active Disconnect" }],
-    "passive": ['binary_sensor', { entity_category: "config", expire_after: 5, name: "Passive Mode" }],
     "button_short_press": [
         'device_automation',
         { 'type': 'button_short_press', 'subtype': 'button_1', 'automation_type': 'trigger', 'payload': 'ON' }
@@ -57,6 +56,11 @@ export function makeButtonController(
         }
     }
     const genButtonUniqueId = (bdaddr: string): string => bdaddr.replace(/:/g, '_')
+    // Entities published by earlier versions that no longer exist. Their retained
+    // discovery configs are cleared on registration so they leave Home Assistant.
+    const RETIRED_ENTITIES: [HAComponent, string][] = [
+        ['binary_sensor', 'passive'], // "Passive Mode": the SDK has no such field
+    ]
     const registerButton = (button: Button) => {
         logger.info('Registering', JSON.stringify(button, null, 4))
         const haDevice = getDeviceFromButton(button);
@@ -97,6 +101,8 @@ export function makeButtonController(
                 },
             )
         });
+        RETIRED_ENTITIES.forEach(retired =>
+            ha.deregisterEntity(retired[0], genButtonUniqueId(button.bdaddr), retired[1]));
     }
     const deregisterButton = (button: Button) => {
         logger.info('Deregistering', JSON.stringify(button, null, 4))
@@ -127,7 +133,6 @@ export function makeButtonController(
         ha.publishState(genButtonUniqueId(button.bdaddr), 'connected', button.connected ? 'ON' : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), 'ready', button.ready ? 'ON' : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), 'activeDisconnect', button.activeDisconnect ? 'ON' : "OFF");
-        ha.publishState(genButtonUniqueId(button.bdaddr), 'passive', button.activeDisconnect ? 'ON' : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), 'lifeline', 'ON');
     }
     const addBtn = (eventName: string) => (obj: { bdaddr: string }) => {
