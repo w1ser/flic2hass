@@ -193,14 +193,17 @@ function makeButtonController(ha, buttonModule) {
         Object.keys(ENTITIES).forEach(function(objectId) {
             var avl = {
                 availability: [
+                    // These topics carry 'ON'/'OFF' (publishButtonMeta), so
+                    // 'OFF' is what must mark the entity unavailable. HA
+                    // ignores an availability payload matching neither value.
                     {
                         payload_available: "ON",
-                        payload_not_available: "unavailable",
+                        payload_not_available: "OFF",
                         topic: ha.genFlicPrefix(genButtonUniqueId(button.bdaddr), "ready")
                     },
                     {
                         payload_available: "ON",
-                        payload_not_available: "unavailable",
+                        payload_not_available: "OFF",
                         topic: ha.genFlicPrefix(genButtonUniqueId(button.bdaddr), "lifeline")
                     }
                 ],
@@ -1261,8 +1264,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;

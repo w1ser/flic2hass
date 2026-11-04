@@ -63,14 +63,17 @@ export function makeButtonController(
         Object.keys(ENTITIES).forEach(objectId => {
             let avl: any = {
                 availability: [
+                    // These topics carry 'ON'/'OFF' (publishButtonMeta), so
+                    // 'OFF' is what must mark the entity unavailable. HA
+                    // ignores an availability payload matching neither value.
                     {
                         payload_available: 'ON',
-                        payload_not_available: 'unavailable',
+                        payload_not_available: 'OFF',
                         topic: ha.genFlicPrefix(genButtonUniqueId(button.bdaddr), 'ready')
                     },
                     {
                         payload_available: 'ON',
-                        payload_not_available: 'unavailable',
+                        payload_not_available: 'OFF',
                         topic: ha.genFlicPrefix(genButtonUniqueId(button.bdaddr), 'lifeline')
                     },
                 ],
