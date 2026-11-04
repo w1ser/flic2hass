@@ -910,7 +910,7 @@ function mqttInt2Str(arr) {
 /** Create escaped hex value from number */ function createEscapedHex(n) {
     return fromCharCode(parseInt(n.toString(16), 16));
 }
-// Handle a single packet of data
+// Handle incoming socket data: may hold several packets, or part of one
 MQTT.prototype.packetHandler = function(data) {
     // if we had some data left over from last
     // time, add it on
@@ -918,25 +918,25 @@ MQTT.prototype.packetHandler = function(data) {
         data = Buffer.from(Array.prototype.slice.call(this.partData).concat(Array.prototype.slice.call(data)));
         this.partData = [];
     }
-    // Figure out packet length...
-    var dLen = mqttPacketLengthDec(data.slice(1, data.length));
-    var pLen = dLen.decLen + dLen.lenBy + 1;
-    // less than one packet?
-    if (data.length < pLen) {
-        this.partData = data;
-        return;
+    // Handle every complete packet in order, iteratively. Re-emitting the
+    // remainder per packet recursed once per packet (stack overflow on a
+    // burst of small packets, #6) and handled the packets in reverse order.
+    while(data.length > 0){
+        // Figure out packet length...
+        var dLen = mqttPacketLengthDec(data.slice(1, data.length));
+        var pLen = dLen.decLen + dLen.lenBy + 1;
+        // less than one packet? keep it for the next chunk
+        if (data.length < pLen) {
+            this.partData = data;
+            return;
+        }
+        this.handlePacket(data.slice(0, pLen), data.slice(1 + dLen.lenBy, pLen));
+        data = data.slice(pLen, data.length);
     }
-    // Allow zero-size pData, but detect if its indexes
-    // will go out of bounds.
-    if (1 + dLen.lenBy >= data.length) {
-        return;
-    }
-    // Get the data for this packet
-    var pData = data.slice(1 + dLen.lenBy, pLen);
-    // more than one packet? re-emit it so we handle it later
-    if (data.length > pLen) {
-        this.client.emit("data", data.slice(pLen, data.length));
-    }
+};
+// Handle one complete MQTT packet. `data` is the whole packet, `pData` the
+// part after the fixed header.
+MQTT.prototype.handlePacket = function(data, pData) {
     // Now handle this MQTT packet
     var cmd = data[0];
     var type = cmd >> 4;
@@ -1261,8 +1261,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;

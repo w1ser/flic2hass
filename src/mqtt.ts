@@ -292,7 +292,7 @@ function createEscapedHex(n: number): string {
     return fromCharCode(parseInt(n.toString(16), 16));
 }
 
-// Handle a single packet of data
+// Handle incoming socket data: may hold several packets, or part of one
 MQTT.prototype.packetHandler = function (data) {
 
     // if we had some data left over from last
@@ -302,28 +302,26 @@ MQTT.prototype.packetHandler = function (data) {
         this.partData = [];
     }
 
-    // Figure out packet length...
-    var dLen = mqttPacketLengthDec(data.slice(1, data.length));
-    var pLen = dLen.decLen + dLen.lenBy + 1;
-    // less than one packet?
-    if (data.length < pLen) {
-        this.partData = data;
-        return;
+    // Handle every complete packet in order, iteratively. Re-emitting the
+    // remainder per packet recursed once per packet (stack overflow on a
+    // burst of small packets, #6) and handled the packets in reverse order.
+    while (data.length > 0) {
+        // Figure out packet length...
+        var dLen = mqttPacketLengthDec(data.slice(1, data.length));
+        var pLen = dLen.decLen + dLen.lenBy + 1;
+        // less than one packet? keep it for the next chunk
+        if (data.length < pLen) {
+            this.partData = data;
+            return;
+        }
+        this.handlePacket(data.slice(0, pLen), data.slice(1 + dLen.lenBy, pLen));
+        data = data.slice(pLen, data.length);
     }
+};
 
-    // Allow zero-size pData, but detect if its indexes
-    // will go out of bounds.
-    if (1 + dLen.lenBy >= data.length) {
-        return;
-    }
-
-    // Get the data for this packet
-    var pData = data.slice(1 + dLen.lenBy, pLen);
-
-    // more than one packet? re-emit it so we handle it later
-    if (data.length > pLen) {
-        this.client.emit('data', data.slice(pLen, data.length));
-    }
+// Handle one complete MQTT packet. `data` is the whole packet, `pData` the
+// part after the fixed header.
+MQTT.prototype.handlePacket = function (data, pData) {
     // Now handle this MQTT packet
     var cmd = data[0];
     var type = cmd >> 4;
