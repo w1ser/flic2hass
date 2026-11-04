@@ -85,8 +85,11 @@ export function makeHAmqtt(
         objectId: string,
     ) => {
         const configtopic = genHAPrefix(component, nodeId, objectId) + "/config"
-        mqttServer.publish(configtopic, null, { retain: false });
-        logger.debug(configtopic, null);
+        // An empty *retained* payload is how MQTT discovery removes an entity:
+        // it tells Home Assistant to delete it and clears the retained config
+        // on the broker, so it does not come back after a restart.
+        mqttServer.publish(configtopic, "", { retain: true });
+        logger.debug(configtopic, "<removed>");
     }
 
     return {

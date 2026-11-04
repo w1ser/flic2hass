@@ -268,9 +268,10 @@ function makeButtonController(ha, buttonModule) {
         });
         buttonModule.on("buttonUpdated", addBtn("buttonUpdated"));
         buttonModule.on("buttonDeleted", function(btn) {
+            // The SDK passes only { bdaddr } here; the button no longer exists,
+            // so there is no state left to publish.
             logger.debug("buttonDeleted", JSON.stringify(btn, null, 4));
             deregisterButton(btn);
-            publishButtonMeta(btn);
         });
         buttonModule.on("buttonDisconnected", function(param) {
             var bdaddr = param.bdaddr;
@@ -414,10 +415,13 @@ function makeHAmqtt(mqttServer) {
     };
     var deregisterEntity = function(component, nodeId, objectId) {
         var configtopic = genHAPrefix(component, nodeId, objectId) + "/config";
-        mqttServer.publish(configtopic, null, {
-            retain: false
+        // An empty *retained* payload is how MQTT discovery removes an entity:
+        // it tells Home Assistant to delete it and clears the retained config
+        // on the broker, so it does not come back after a restart.
+        mqttServer.publish(configtopic, "", {
+            retain: true
         });
-        logger.debug(configtopic, null);
+        logger.debug(configtopic, "<removed>");
     };
     return {
         deregisterEntity: deregisterEntity,
@@ -1261,8 +1265,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;

@@ -148,9 +148,10 @@ export function makeButtonController(
         });
         buttonModule.on('buttonUpdated', addBtn('buttonUpdated'));
         buttonModule.on('buttonDeleted', (btn) => {
+            // The SDK passes only { bdaddr } here; the button no longer exists,
+            // so there is no state left to publish.
             logger.debug('buttonDeleted', JSON.stringify(btn, null, 4))
             deregisterButton(btn);
-            publishButtonMeta(btn);
         });
         buttonModule.on('buttonDisconnected', ({ bdaddr }) => {
             publishButtonMeta(buttonModule.getButton(bdaddr));
