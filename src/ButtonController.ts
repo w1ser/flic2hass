@@ -19,9 +19,9 @@ const ENTITIES: Record<string, [HAComponent, Record<string, any>]> = {
     "batteryLastUpdate": ['sensor', { entity_category: "diagnostic", expire_after: 5, name: "Battery Last Update Time", device_class: "duration", unit_of_measurement: "s" }],
     "lifeline": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, name: "Flichub Connected", device_class: "connectivity", unit_of_measurement: "s", payload_not_available: "OFF" }],
     "connected": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, device_class: 'connectivity', name: "Connection Established", payload_not_available: "OFF" }],
-    "ready": ['binary_sensor', { entity_category: "config", expire_after: 5, device_class: 'connectivity', name: "Connection Verified" }],
-    "activeDisconnect": ['binary_sensor', { entity_category: "config", expire_after: 5, name: "User Active Disconnect" }],
-    "passive": ['binary_sensor', { entity_category: "config", expire_after: 5, name: "Passive Mode" }],
+    "ready": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, device_class: 'connectivity', name: "Connection Verified" }],
+    "activeDisconnect": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, name: "User Active Disconnect" }],
+    "passive": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, name: "Passive Mode" }],
     "button_short_press": [
         'device_automation',
         { 'type': 'button_short_press', 'subtype': 'button_1', 'automation_type': 'trigger', 'payload': 'ON' }
