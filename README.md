@@ -89,6 +89,7 @@ The setup example contains just the bare minimum changes, if you wish to play ar
       "host": "", // MQTT Host
       "port": 1883, // MQTT Port
       "client_id": "", // MQTT Identifier
+      "keep_alive": 60, // MQTT keep-alive in seconds (6-65535, default 60)
       "username": "", // MQTT Username
       "password": "" // MQTT Password
    },

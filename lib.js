@@ -26,7 +26,7 @@ function makeLogger(prefix) {
     };
 }
 
-function _define_property$3(obj, key, value) {
+function _define_property$2(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
             value: value,
@@ -39,7 +39,7 @@ function _define_property$3(obj, key, value) {
     }
     return obj;
 }
-function _object_spread$3(target) {
+function _object_spread$2(target) {
     for(var i = 1; i < arguments.length; i++){
         var source = arguments[i] != null ? arguments[i] : {};
         var ownKeys = Object.keys(source);
@@ -49,13 +49,13 @@ function _object_spread$3(target) {
             }));
         }
         ownKeys.forEach(function(key) {
-            _define_property$3(target, key, source[key]);
+            _define_property$2(target, key, source[key]);
         });
     }
     return target;
 }
 var makeOptions$2 = function(opt) {
-    return _object_spread$3({
+    return _object_spread$2({
         debug: false
     }, opt);
 };
@@ -217,7 +217,7 @@ function makeButtonController(ha, buttonModule) {
             if (ENTITIES[objectId][0] === "device_automation") {
                 avl = {};
             }
-            ha.registerEntity("Button ".concat(objectId), ENTITIES[objectId][0], genButtonUniqueId(button.bdaddr), objectId, haDevice, _object_spread$3({}, ENTITIES[objectId][1], avl));
+            ha.registerEntity("Button ".concat(objectId), ENTITIES[objectId][0], genButtonUniqueId(button.bdaddr), objectId, haDevice, _object_spread$2({}, ENTITIES[objectId][1], avl));
         });
     };
     var deregisterButton = function(button) {
@@ -314,7 +314,7 @@ function makeButtonController(ha, buttonModule) {
     };
 }
 
-function _define_property$2(obj, key, value) {
+function _define_property$1(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
             value: value,
@@ -327,7 +327,7 @@ function _define_property$2(obj, key, value) {
     }
     return obj;
 }
-function _object_spread$2(target) {
+function _object_spread$1(target) {
     for(var i = 1; i < arguments.length; i++){
         var source = arguments[i] != null ? arguments[i] : {};
         var ownKeys = Object.keys(source);
@@ -337,12 +337,12 @@ function _object_spread$2(target) {
             }));
         }
         ownKeys.forEach(function(key) {
-            _define_property$2(target, key, source[key]);
+            _define_property$1(target, key, source[key]);
         });
     }
     return target;
 }
-function ownKeys$1(object, enumerableOnly) {
+function ownKeys(object, enumerableOnly) {
     var keys = Object.keys(object);
     if (Object.getOwnPropertySymbols) {
         var symbols = Object.getOwnPropertySymbols(object);
@@ -355,22 +355,22 @@ function ownKeys$1(object, enumerableOnly) {
     }
     return keys;
 }
-function _object_spread_props$1(target, source) {
+function _object_spread_props(target, source) {
     source = source != null ? source : {};
     if (Object.getOwnPropertyDescriptors) {
         Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
     } else {
-        ownKeys$1(Object(source)).forEach(function(key) {
+        ownKeys(Object(source)).forEach(function(key) {
             Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
         });
     }
     return target;
 }
 var makeOptions$1 = function(opt) {
-    return _object_spread_props$1(_object_spread$2({
+    return _object_spread_props(_object_spread$1({
         debug: false
     }, opt), {
-        topics: _object_spread$2({
+        topics: _object_spread$1({
             homeassistant: "homeassistant",
             flic: "flic"
         }, opt.topics)
@@ -401,7 +401,7 @@ function makeHAmqtt(mqttServer) {
         } else {
             additionalProps.state_topic = genFlicPrefix(nodeId, objectId);
         }
-        var configObj = _object_spread_props$1(_object_spread$2({
+        var configObj = _object_spread_props(_object_spread$1({
             name: name
         }, additionalProps), {
             unique_id: "Flic_".concat(nodeId, "_").concat(objectId),
@@ -427,7 +427,7 @@ function makeHAmqtt(mqttServer) {
     };
 }
 
-function _define_property$1(obj, key, value) {
+function _define_property(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
             value: value,
@@ -440,7 +440,7 @@ function _define_property$1(obj, key, value) {
     }
     return obj;
 }
-function _object_spread$1(target) {
+function _object_spread(target) {
     for(var i = 1; i < arguments.length; i++){
         var source = arguments[i] != null ? arguments[i] : {};
         var ownKeys = Object.keys(source);
@@ -450,7 +450,7 @@ function _object_spread$1(target) {
             }));
         }
         ownKeys.forEach(function(key) {
-            _define_property$1(target, key, source[key]);
+            _define_property(target, key, source[key]);
         });
     }
     return target;
@@ -470,7 +470,7 @@ var convertStr2Uint32Array = function(s) {
     }));
 };
 var makeOptions = function(opt) {
-    return _object_spread$1({
+    return _object_spread({
         debug: false,
         uniqueId: "0"
     }, opt);
@@ -698,7 +698,12 @@ Uint8Array.prototype.charCodeAt = function(a, b) {
     options = options || {};
     this.port = options.port || C.DEF_PORT;
     this.client_id = options.client_id || mqttUid();
-    this.keep_alive = options.keep_alive || C.DEF_KEEP_ALIVE;
+    // keep_alive is a number of seconds. Anything else (including `true`)
+    // used to reach the CONNECT packet as 1 s and set a negative ping
+    // interval, so the client pinged the broker as fast as the runtime
+    // allowed. Fall back to the default unless it is a sane number.
+    var keepAlive = Number(options.keep_alive);
+    this.keep_alive = typeof options.keep_alive === "number" && keepAlive > 5 && keepAlive <= 65535 ? keepAlive : C.DEF_KEEP_ALIVE;
     this.clean_session = options.clean_session || true;
     this.username = options.username;
     this.password = options.password;
@@ -1193,62 +1198,8 @@ MQTT.prototype.packetHandler = function(data) {
     return new MQTT(server, options);
 }
 
-function _define_property(obj, key, value) {
-    if (key in obj) {
-        Object.defineProperty(obj, key, {
-            value: value,
-            enumerable: true,
-            configurable: true,
-            writable: true
-        });
-    } else {
-        obj[key] = value;
-    }
-    return obj;
-}
-function _object_spread(target) {
-    for(var i = 1; i < arguments.length; i++){
-        var source = arguments[i] != null ? arguments[i] : {};
-        var ownKeys = Object.keys(source);
-        if (typeof Object.getOwnPropertySymbols === "function") {
-            ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function(sym) {
-                return Object.getOwnPropertyDescriptor(source, sym).enumerable;
-            }));
-        }
-        ownKeys.forEach(function(key) {
-            _define_property(target, key, source[key]);
-        });
-    }
-    return target;
-}
-function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-    if (Object.getOwnPropertySymbols) {
-        var symbols = Object.getOwnPropertySymbols(object);
-        if (enumerableOnly) {
-            symbols = symbols.filter(function(sym) {
-                return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-            });
-        }
-        keys.push.apply(keys, symbols);
-    }
-    return keys;
-}
-function _object_spread_props(target, source) {
-    source = source != null ? source : {};
-    if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-        ownKeys(Object(source)).forEach(function(key) {
-            Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-    }
-    return target;
-}
 var start = function(buttonModule, irModule, options) {
-    var mqttServer = create(options.mqtt.host, _object_spread_props(_object_spread({}, options.mqtt), {
-        keep_alive: true
-    }));
+    var mqttServer = create(options.mqtt.host, options.mqtt);
     var _options_debug;
     var logger = makeLogger("root", (_options_debug = options.debug) !== null && _options_debug !== void 0 ? _options_debug : false);
     var _options_ha;
@@ -1261,8 +1212,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;

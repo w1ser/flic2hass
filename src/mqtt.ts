@@ -78,7 +78,13 @@ function MQTT(server, options) {
     options = options || {};
     this.port = options.port || C.DEF_PORT;
     this.client_id = options.client_id || mqttUid();
-    this.keep_alive = options.keep_alive || C.DEF_KEEP_ALIVE;
+    // keep_alive is a number of seconds. Anything else (including `true`)
+    // used to reach the CONNECT packet as 1 s and set a negative ping
+    // interval, so the client pinged the broker as fast as the runtime
+    // allowed. Fall back to the default unless it is a sane number.
+    var keepAlive = Number(options.keep_alive);
+    this.keep_alive = (typeof options.keep_alive === 'number' && keepAlive > 5 && keepAlive <= 65535)
+        ? keepAlive : C.DEF_KEEP_ALIVE;
     this.clean_session = options.clean_session || true;
     this.username = options.username;
     this.password = options.password;

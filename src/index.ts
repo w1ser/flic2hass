@@ -9,7 +9,7 @@ export type MQTTOpt = {
     host: string;
     port: number;
     client_id: string;
-    keep_alive: boolean;
+    keep_alive: number; // seconds, sent to the broker in CONNECT
     clean_session: boolean;
     username: string;
     password: string;
@@ -28,7 +28,7 @@ export const start = (
 ) => {
     const mqttServer = mqtt.create(
         options.mqtt.host,
-        {...options.mqtt, keep_alive: true},
+        options.mqtt,
     );
     const logger = makeLogger('root', options.debug ?? false);
     options.ha = options.ha ?? {};
