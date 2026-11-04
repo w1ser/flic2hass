@@ -137,6 +137,21 @@ var ENTITIES = {
             name: "Passive Mode"
         }
     ],
+    // Home Assistant's event entity for stateless buttons: one entity per button
+    // whose event_type is the press kind. `name: null` makes it the device's
+    // main feature (entity named after the button itself).
+    event: [
+        "event",
+        {
+            name: null,
+            device_class: "button",
+            event_types: [
+                "press",
+                "double_press",
+                "long_press"
+            ]
+        }
+    ],
     button_short_press: [
         "device_automation",
         {
@@ -233,10 +248,19 @@ function makeButtonController(ha, buttonModule) {
         ha.publishState(genButtonUniqueId(button.bdaddr), "action", state);
         if (state === "click") {
             ha.publishState(genButtonUniqueId(button.bdaddr), "button_short_press", "ON");
+            ha.publishState(genButtonUniqueId(button.bdaddr), "event", JSON.stringify({
+                event_type: "press"
+            }));
         } else if (state === "double_click") {
             ha.publishState(genButtonUniqueId(button.bdaddr), "button_double_press", "ON");
+            ha.publishState(genButtonUniqueId(button.bdaddr), "event", JSON.stringify({
+                event_type: "double_press"
+            }));
         } else if (state === "hold") {
             ha.publishState(genButtonUniqueId(button.bdaddr), "button_long_press", "ON");
+            ha.publishState(genButtonUniqueId(button.bdaddr), "event", JSON.stringify({
+                event_type: "long_press"
+            }));
         }
     };
     var publishButtonMeta = function(button) {
@@ -1261,8 +1285,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;

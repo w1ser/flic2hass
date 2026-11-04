@@ -21,7 +21,7 @@ export type HADevice = {
     hw?: string,
     configuration_url?: string,
 }
-export type HAComponent = 'sensor' | 'binary_sensor' | 'button' | 'switch' | 'text' | 'device_automation';
+export type HAComponent = 'sensor' | 'binary_sensor' | 'button' | 'switch' | 'text' | 'event' | 'device_automation';
 export const makeOptions = (opt: Partial<HAmqttOptions>): HAmqttOptions => ({
     debug: false,
     ...opt,

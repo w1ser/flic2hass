@@ -14,6 +14,7 @@ This is a complete refactor of various previous versions of flic2hass. This vers
 * Show connectivity state
 * Show click action types: `click` `hold` `double_click`
 * Device emits automation events
+* Event entity per button (`press`, `double_press`, `long_press`) for Home Assistant's event triggers
 * Detect presses: `released` `pressed`
 * Battery Logging
 * Extract firmware & sofware version numbers

@@ -22,6 +22,10 @@ const ENTITIES: Record<string, [HAComponent, Record<string, any>]> = {
     "ready": ['binary_sensor', { entity_category: "config", expire_after: 5, device_class: 'connectivity', name: "Connection Verified" }],
     "activeDisconnect": ['binary_sensor', { entity_category: "config", expire_after: 5, name: "User Active Disconnect" }],
     "passive": ['binary_sensor', { entity_category: "config", expire_after: 5, name: "Passive Mode" }],
+    // Home Assistant's event entity for stateless buttons: one entity per button
+    // whose event_type is the press kind. `name: null` makes it the device's
+    // main feature (entity named after the button itself).
+    "event": ['event', { name: null, device_class: 'button', event_types: ['press', 'double_press', 'long_press'] }],
     "button_short_press": [
         'device_automation',
         { 'type': 'button_short_press', 'subtype': 'button_1', 'automation_type': 'trigger', 'payload': 'ON' }
@@ -115,10 +119,13 @@ export function makeButtonController(
         ha.publishState(genButtonUniqueId(button.bdaddr), 'action', state);
         if (state === 'click') {
             ha.publishState(genButtonUniqueId(button.bdaddr), 'button_short_press', 'ON')
+            ha.publishState(genButtonUniqueId(button.bdaddr), 'event', JSON.stringify({ event_type: 'press' }))
         } else if (state === 'double_click') {
             ha.publishState(genButtonUniqueId(button.bdaddr), 'button_double_press', 'ON')
+            ha.publishState(genButtonUniqueId(button.bdaddr), 'event', JSON.stringify({ event_type: 'double_press' }))
         } else if (state === 'hold') {
             ha.publishState(genButtonUniqueId(button.bdaddr), 'button_long_press', 'ON')
+            ha.publishState(genButtonUniqueId(button.bdaddr), 'event', JSON.stringify({ event_type: 'long_press' }))
         }
     }
     const publishButtonMeta = (button: Button) => {
