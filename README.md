@@ -157,3 +157,20 @@ The setup example contains just the bare minimum changes, if you wish to play ar
 * Can you add support for LED control?
 
    This is also not yet [supported by SDK](https://community.flic.io/topic/18197/flic-button-led-control/3)
+
+## Development
+
+`lib.js` is built from `src/` and is the file users paste into the Flic Hub IDE:
+
+```sh
+npm ci
+npm run build   # src/ -> lib.js
+npm test        # behaviour tests for ./lib.js
+```
+
+The tests run the bundled `lib.js` under Node against a small fake MQTT broker on
+`127.0.0.1`, with stand-ins for the hub's `buttons` and `ir` modules. No hub, broker or
+Home Assistant is needed. Each scenario runs in its own process because `lib.js` patches
+`Object.prototype`. Node is not the hub's runtime (QuickJS), so the tests cover protocol and
+Home Assistant behaviour, not hub timing. To test another build:
+`FLIC2HASS_LIB=/path/to/lib.js npm test`.
