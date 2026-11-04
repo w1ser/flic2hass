@@ -87,8 +87,7 @@ var ENTITIES = {
             entity_category: "diagnostic",
             expire_after: 5,
             name: "Battery Last Update Time",
-            device_class: "duration",
-            unit_of_measurement: "s"
+            device_class: "timestamp"
         }
     ],
     lifeline: [
@@ -240,8 +239,13 @@ function makeButtonController(ha, buttonModule) {
         }
     };
     var publishButtonMeta = function(button) {
-        ha.publishState(genButtonUniqueId(button.bdaddr), "battery", button.batteryStatus);
-        ha.publishState(genButtonUniqueId(button.bdaddr), "batteryLastUpdate", button.batteryTimestamp ? "".concat(Math.round((Date.now() - button.batteryTimestamp) / 1000)) : "unknown");
+        // "None" is Home Assistant's MQTT payload for "no value": the sensor shows
+        // unknown instead of logging a non-numeric / unparsable state error.
+        ha.publishState(genButtonUniqueId(button.bdaddr), "battery", typeof button.batteryStatus === "number" ? button.batteryStatus : "None");
+        // When the battery was last read, as an ISO 8601 timestamp. A running
+        // "seconds since" counter changed on every 3 s publish, so HA recorded
+        // a new state for it each time.
+        ha.publishState(genButtonUniqueId(button.bdaddr), "batteryLastUpdate", button.batteryTimestamp ? new Date(button.batteryTimestamp).toISOString() : "None");
         ha.publishState(genButtonUniqueId(button.bdaddr), "connected", button.connected ? "ON" : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), "ready", button.ready ? "ON" : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), "activeDisconnect", button.activeDisconnect ? "ON" : "OFF");
@@ -1261,8 +1265,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;

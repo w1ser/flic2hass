@@ -16,7 +16,7 @@ const ENTITIES: Record<string, [HAComponent, Record<string, any>]> = {
     "action": ['sensor', { icon: 'mdi:gesture-tap-button', name: "Click Action" }],
     "state": ['sensor', { icon: 'mdi:radiobox-indeterminate-variant' }],
     "battery": ['sensor', { expire_after: 5, unit_of_measurement: '%', device_class: 'battery' }],
-    "batteryLastUpdate": ['sensor', { entity_category: "diagnostic", expire_after: 5, name: "Battery Last Update Time", device_class: "duration", unit_of_measurement: "s" }],
+    "batteryLastUpdate": ['sensor', { entity_category: "diagnostic", expire_after: 5, name: "Battery Last Update Time", device_class: "timestamp" }],
     "lifeline": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, name: "Flichub Connected", device_class: "connectivity", unit_of_measurement: "s", payload_not_available: "OFF" }],
     "connected": ['binary_sensor', { entity_category: "diagnostic", expire_after: 5, device_class: 'connectivity', name: "Connection Established", payload_not_available: "OFF" }],
     "ready": ['binary_sensor', { entity_category: "config", expire_after: 5, device_class: 'connectivity', name: "Connection Verified" }],
@@ -122,8 +122,13 @@ export function makeButtonController(
         }
     }
     const publishButtonMeta = (button: Button) => {
-        ha.publishState(genButtonUniqueId(button.bdaddr), 'battery', button.batteryStatus);
-        ha.publishState(genButtonUniqueId(button.bdaddr), 'batteryLastUpdate', button.batteryTimestamp ? `${Math.round((Date.now() - button.batteryTimestamp) / 1000)}` : 'unknown');
+        // "None" is Home Assistant's MQTT payload for "no value": the sensor shows
+        // unknown instead of logging a non-numeric / unparsable state error.
+        ha.publishState(genButtonUniqueId(button.bdaddr), 'battery', typeof button.batteryStatus === 'number' ? button.batteryStatus : 'None');
+        // When the battery was last read, as an ISO 8601 timestamp. A running
+        // "seconds since" counter changed on every 3 s publish, so HA recorded
+        // a new state for it each time.
+        ha.publishState(genButtonUniqueId(button.bdaddr), 'batteryLastUpdate', button.batteryTimestamp ? new Date(button.batteryTimestamp).toISOString() : 'None');
         ha.publishState(genButtonUniqueId(button.bdaddr), 'connected', button.connected ? 'ON' : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), 'ready', button.ready ? 'ON' : "OFF");
         ha.publishState(genButtonUniqueId(button.bdaddr), 'activeDisconnect', button.activeDisconnect ? 'ON' : "OFF");
