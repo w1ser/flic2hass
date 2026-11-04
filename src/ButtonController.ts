@@ -137,7 +137,10 @@ export function makeButtonController(
     }
     const start = () => {
         logger.info("Starting...")
-        let resetActiontInv: null | any = null;
+        // One pending "reset to none" timer per button. A single shared timer
+        // was cancelled by another button's press, leaving the first button's
+        // Click Action stuck on its last value.
+        const resetActionTimers: Record<string, any> = {};
         buttonModule.on('buttonAdded', addBtn('buttonAdded'));
         buttonModule.on('buttonConnected', addBtn('buttonConnected'));
         buttonModule.on('buttonReady', (btn) => {
@@ -166,8 +169,8 @@ export function makeButtonController(
             publishButtonMeta(btn);
         });
         buttonModule.on('buttonSingleOrDoubleClickOrHold', obj => {
-            if (resetActiontInv !== null) {
-                clearTimeout(resetActiontInv);
+            if (resetActionTimers[obj.bdaddr] !== undefined) {
+                clearTimeout(resetActionTimers[obj.bdaddr]);
             }
             const btn = buttonModule.getButton(obj.bdaddr);
             publishButtonAction(
@@ -175,7 +178,8 @@ export function makeButtonController(
                 obj.isSingleClick ? "click" : obj.isDoubleClick ? "double_click" : "hold",
             );
             publishButtonMeta(btn);
-            resetActiontInv = setTimeout(() => {
+            resetActionTimers[obj.bdaddr] = setTimeout(() => {
+                delete resetActionTimers[obj.bdaddr];
                 publishButtonAction(btn, 'none');
             }, 500)
         });

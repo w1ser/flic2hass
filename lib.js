@@ -257,7 +257,10 @@ function makeButtonController(ha, buttonModule) {
     };
     var start = function() {
         logger.info("Starting...");
-        var resetActiontInv = null;
+        // One pending "reset to none" timer per button. A single shared timer
+        // was cancelled by another button's press, leaving the first button's
+        // Click Action stuck on its last value.
+        var resetActionTimers = {};
         buttonModule.on("buttonAdded", addBtn("buttonAdded"));
         buttonModule.on("buttonConnected", addBtn("buttonConnected"));
         buttonModule.on("buttonReady", function(btn) {
@@ -289,13 +292,14 @@ function makeButtonController(ha, buttonModule) {
             publishButtonMeta(btn);
         });
         buttonModule.on("buttonSingleOrDoubleClickOrHold", function(obj) {
-            if (resetActiontInv !== null) {
-                clearTimeout(resetActiontInv);
+            if (resetActionTimers[obj.bdaddr] !== undefined) {
+                clearTimeout(resetActionTimers[obj.bdaddr]);
             }
             var btn = buttonModule.getButton(obj.bdaddr);
             publishButtonAction(btn, obj.isSingleClick ? "click" : obj.isDoubleClick ? "double_click" : "hold");
             publishButtonMeta(btn);
-            resetActiontInv = setTimeout(function() {
+            resetActionTimers[obj.bdaddr] = setTimeout(function() {
+                delete resetActionTimers[obj.bdaddr];
                 publishButtonAction(btn, "none");
             }, 500);
         });
@@ -1261,8 +1265,8 @@ var start = function(buttonModule, irModule, options) {
     options.ha.debug = (_ref = (_options_ha_debug = options.ha.debug) !== null && _options_ha_debug !== void 0 ? _options_ha_debug : options.debug) !== null && _ref !== void 0 ? _ref : false;
     var _options_flicBtns_debug, _ref1;
     options.flicBtns.debug = (_ref1 = (_options_flicBtns_debug = options.flicBtns.debug) !== null && _options_flicBtns_debug !== void 0 ? _options_flicBtns_debug : options.debug) !== null && _ref1 !== void 0 ? _ref1 : false;
-    var _options_flicBtns_debug1, _ref2;
-    options.flicIR.debug = (_ref2 = (_options_flicBtns_debug1 = options.flicBtns.debug) !== null && _options_flicBtns_debug1 !== void 0 ? _options_flicBtns_debug1 : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
+    var _options_flicIR_debug, _ref2;
+    options.flicIR.debug = (_ref2 = (_options_flicIR_debug = options.flicIR.debug) !== null && _options_flicIR_debug !== void 0 ? _options_flicIR_debug : options.debug) !== null && _ref2 !== void 0 ? _ref2 : false;
     var ha = makeHAmqtt(mqttServer, options.ha);
     mqttServer.on("connected", function() {
         var _options_flicBtns, _options_flicIR;
